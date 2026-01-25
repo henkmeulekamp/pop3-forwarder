@@ -1,0 +1,21 @@
+services:
+  pop3-forwarder:
+    container_name: pop3-forwarder
+    build: 
+      context: .
+      dockerfile: ./Dockerfile 
+    image: henkmeulekamp/pop3-forwarding
+    environment:
+      - Pop3Settings__Host=pop3.example.com
+      - Pop3Settings__Port=995
+      - Pop3Settings__UseSsl=true
+      - Pop3Settings__CheckCertificateRevocation=false
+      - Pop3Settings__Username=my-email-username
+      - Pop3Settings__Password=my-email-password
+      - SmtpSettings__Host=smtp.gmail.com
+      - SmtpSettings__Port=465
+      - SmtpSettings__UseSsl=true
+      - SmtpSettings__CheckCertificateRevocation=false
+      - SmtpSettings__Username=mygmail@gmail.com
+      - SmtpSettings__Password=gmail-app-password-or-password
+      - SmtpSettings__ForwardTo=my-forward-to-email@gmail.com 
