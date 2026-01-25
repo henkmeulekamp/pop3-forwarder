@@ -2,7 +2,9 @@
 
 Small console app that gets email from pop3 and forwards to given smtp service.
 Build this to keep forwarding an email to my gmail. Gmail dropped support for reading an pop3 account into an existing gmail inbox in January 2026.
-
+  
+Pushed to dockerhub for easy download into Synology https://hub.docker.com/repositories/henkmeulekamp  
+  
 ## 1. Environment Variables
 
 The application can be configured using the following environment variables for Docker:
