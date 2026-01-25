@@ -39,8 +39,10 @@ The forwarded emails preserve the original subject and body, but use the configu
 ## 3. Running with Docker CLI
 
 ```shell
+# build
 docker build -t pop3-forwarder .
 
+# run given settings
 docker run \
   -e Pop3Settings__Host=pop.example.com \
   -e Pop3Settings__Port=995 \
@@ -56,6 +58,9 @@ docker run \
   -e SmtpSettings__Password=your-smtp-password \
   -e SmtpSettings__ForwardTo=recipient@example.com \
   pop3-forwarder
+
+# shell 
+docker exec -it pop3-forwarder /bin/bash
 ```
 
 ## 4. Running with Docker Compose
@@ -75,11 +80,7 @@ docker-compose -f ./docker-compose.yml down
 
 # 5. Dockerhub
 
-```
+```shell
 docker-compose build
-$ docker push …/some
-
-docker tag pop3-forwarder latest
-$ docker push henkmeulekamp/pop3-forwarding
-
+docker push henkmeulekamp/pop3-forwarding:latest
 ```
