@@ -65,8 +65,8 @@ docker exec -it pop3-forwarder /bin/bash
 
 ## 4. Running with Docker Compose
 
-First, update the environment variables in [compose.yaml](compose.yaml) with your actual email account settings.
-
+First, update the environment variables in [docker-compose.yaml](docker-compose.yaml) with your actual email account settings.
+Currently set 
 ```shell
 # Run the application
 docker-compose -f ./docker-compose.yml up
