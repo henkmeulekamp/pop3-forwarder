@@ -1,6 +1,7 @@
 services:
   pop3-forwarder:
     container_name: pop3-forwarder
+    platform: linux/arm64 
     build: 
       context: .
       dockerfile: ./Dockerfile 
