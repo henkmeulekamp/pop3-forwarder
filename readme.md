@@ -10,26 +10,27 @@ Pushed to dockerhub for easy download into Synology https://hub.docker.com/repos
 The application can be configured using the following environment variables for Docker:
 
 ### POP3 Settings
-- `Pop3Settings__Host` - POP3 server hostname
-- `Pop3Settings__Port` - POP3 server port (typically 995 for SSL)
-- `Pop3Settings__UseSsl` - Enable SSL/TLS (true/false)
-- `Pop3Settings__CheckCertificateRevocation` - Check certificate revocation (true/false)
-- `Pop3Settings__Username` - POP3 account username
-- `Pop3Settings__Password` - POP3 account password
+- `Pop3Settings__Host` - POP3 server hostname, required
+- `Pop3Settings__Port` - POP3 server port (typically 995 for SSL), defaults to 995
+- `Pop3Settings__UseSsl` - Enable SSL/TLS (true/false),  defaults to true
+- `Pop3Settings__CheckCertificateRevocation` - Check certificate revocation (true/false), defaults to false
+- `Pop3Settings__Username` - POP3 account username, required
+- `Pop3Settings__Password` - POP3 account password, required
+- `Pop3Settings__DeleteSpam` - DeleteSpam, defaults to false
 
 ### SMTP Settings
-- `SmtpSettings__Host` - SMTP server hostname
-- `SmtpSettings__Port` - SMTP server port (typically 465 for SSL, 587 for TLS)
-- `SmtpSettings__UseSsl` - Enable SSL/TLS (true/false)
-- `SmtpSettings__CheckCertificateRevocation` - Check certificate revocation (true/false)
-- `SmtpSettings__Username` - SMTP account username
-- `SmtpSettings__Password` - SMTP account password
-- `SmtpSettings__ForwardTo` - Email address to forward messages to
+- `SmtpSettings__Host` - SMTP server hostname, defaults to smtp.gmail.com
+- `SmtpSettings__Port` - SMTP server port (typically 465 for SSL, 587 for TLS), defaults to 465
+- `SmtpSettings__UseSsl` - Enable SSL/TLS (true/false), defaults to true
+- `SmtpSettings__CheckCertificateRevocation` - Check certificate revocation (true/false), defaults to false
+- `SmtpSettings__Username` - SMTP account username, required
+- `SmtpSettings__Password` - SMTP account password, required
+- `SmtpSettings__ForwardTo` - Email address to forward messages to, required
 
 ### Logging Settings
-- `Logging__LogLevel__Default` - Default log level (Trace, Debug, Information, Warning, Error, Critical, None)
-- `Logging__LogLevel__Microsoft` - Log level for Microsoft libraries
-- `Logging__LogLevel__Microsoft.Hosting.Lifetime` - Log level for hosting lifetime events
+- `Logging__LogLevel__Default` - Default log level (Trace, Debug, Information, Warning, Error, Critical, None), defaults to Debug
+- `Logging__LogLevel__Microsoft` - Log level for Microsoft libraries, defaults to Warning
+- `Logging__LogLevel__Microsoft.Hosting.Lifetime` - Log level for hosting lifetime events, defaults to Warning
 
 ## 2. What the Application Does
 
@@ -37,6 +38,8 @@ This application continuously monitors a POP3 email account and forwards all inc
 
 1. Connects to a POP3 server every 60 seconds
 2. Retrieves all messages from the inbox
+    - Does a SpamCheck against https://spamcheck.postmarkapp.com/doc/
+    - When DeleteSpam=true, deletes email with spamscore above 5, no forwarding.
 3. Forwards each message to the configured recipient via SMTP
 4. Deletes successfully forwarded messages from the POP3 server
 5. Repeats the process indefinitely
