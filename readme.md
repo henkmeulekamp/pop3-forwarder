@@ -26,6 +26,11 @@ The application can be configured using the following environment variables for 
 - `SmtpSettings__Password` - SMTP account password
 - `SmtpSettings__ForwardTo` - Email address to forward messages to
 
+### Logging Settings
+- `Logging__LogLevel__Default` - Default log level (Trace, Debug, Information, Warning, Error, Critical, None)
+- `Logging__LogLevel__Microsoft` - Log level for Microsoft libraries
+- `Logging__LogLevel__Microsoft.Hosting.Lifetime` - Log level for hosting lifetime events
+
 ## 2. What the Application Does
 
 This application continuously monitors a POP3 email account and forwards all incoming emails to a specified address via SMTP. It:

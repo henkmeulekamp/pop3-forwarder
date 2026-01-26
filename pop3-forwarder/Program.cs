@@ -1,24 +1,16 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-// Build configuration
-var configuration = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddEnvironmentVariables()
-    .Build();
+var builder = Host.CreateApplicationBuilder(args);
 
-Console.WriteLine("POP3 Email Forwarder");
-Console.WriteLine("Press any ctrl-c to stop...\n");
+// Configure logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
 
-while (true)
-{
-    await MailWorker.ReadPop3EmailsAsync(configuration);
-    
-    Console.WriteLine("\nWaiting 60 seconds before next check...");
-    
-    await Task.Delay(60000);
-    Console.WriteLine($"[{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC] Starting next email check...");
-}
+builder.Services.AddHostedService<EmailForwarderService>();
 
-
-
+var host = builder.Build();
+host.Run();
