@@ -4,11 +4,15 @@ using MimeKit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 
 public class EmailForwarderService : BackgroundService
 {
     private readonly ILogger<EmailForwarderService> _logger;
     private readonly IConfiguration _configuration;
+    private readonly HttpClient _httpClient;
 
     public EmailForwarderService(
         ILogger<EmailForwarderService> logger,
@@ -16,6 +20,8 @@ public class EmailForwarderService : BackgroundService
     {
         _logger = logger;
         _configuration = configuration;
+        _httpClient = new HttpClient();
+        _httpClient.Timeout = TimeSpan.FromSeconds(15);
     }
 
     protected async override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -46,6 +52,7 @@ public class EmailForwarderService : BackgroundService
         string host = _configuration["Pop3Settings:Host"]!;
         int port = int.Parse(_configuration["Pop3Settings:Port"]!);
         bool useSsl = bool.Parse(_configuration["Pop3Settings:UseSsl"]!);
+        bool deleteSpam = bool.Parse(_configuration["Pop3Settings:DeleteSpam"]!);
         bool checkCertificateRevocation = bool.Parse(_configuration["Pop3Settings:CheckCertificateRevocation"]!);
         string username = _configuration["Pop3Settings:Username"]!;
         string password = _configuration["Pop3Settings:Password"]!;
@@ -70,8 +77,19 @@ public class EmailForwarderService : BackgroundService
                 for (int i = 0; i < messageCount; i++)
                 {
                     var message = await client.GetMessageAsync(i);
-                    
                     _logger.LogInformation($"- Message {i + 1}: From: {message.From} Subject: {message.Subject}");
+
+                    var spamScore = await CheckSpamScoreAsync(message);
+                     _logger.LogInformation($"Message has spam score ({spamScore})");
+                    if (spamScore >= 4.0m)
+                    {
+                        _logger.LogWarning($"Message has high spam score ({spamScore}), skipping forward and deleting message");
+                        
+                        if (deleteSpam){
+                            await client.DeleteMessageAsync(i);
+                            continue;
+                        }
+                    }
 
                     // Forward the email via SMTP
                     await SendEmailViaSmtpAsync(message, _configuration);
@@ -84,7 +102,7 @@ public class EmailForwarderService : BackgroundService
                 _logger.LogDebug("POP3 Disconnected from server");
             }
             catch (Exception ex) {
-                _logger.LogError($"POP 3 - Error: {ex.Message}", ex);
+                _logger.LogError(ex, $"POP 3 - Error processing messages");
             }
     }
  
@@ -133,9 +151,53 @@ public class EmailForwarderService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError($"-- SMTP Error: {ex.Message}", ex);
+            _logger.LogError(ex, $"-- SMTP Error");
             // bubble up the error to avoid deleting the email from POP3
             throw; 
+        }
+    }
+
+    private async Task<decimal> CheckSpamScoreAsync(MimeMessage message)
+    {
+        try
+        {
+            var requestBody = new
+            {
+                email = message.ToString(),
+                options = "short"
+            };
+
+            var content = new StringContent(
+                JsonSerializer.Serialize(requestBody),
+                Encoding.UTF8,
+                "application/json");
+
+            var response = await _httpClient.PostAsync(
+                "https://spamcheck.postmarkapp.com/filter",
+                content);
+
+            response.EnsureSuccessStatusCode();
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var jsonDoc = JsonDocument.Parse(responseContent);
+            
+            var success = jsonDoc.RootElement.GetProperty("success").GetBoolean();
+            if (!success)
+            {
+                _logger.LogWarning($"-- Spam check API returned success=false, {responseContent}");
+                return 0m;
+            }
+
+            var score = jsonDoc.RootElement.GetProperty("score").GetString();
+            _logger.LogInformation($"Spam score: {score}");
+            
+            return decimal.Parse(score, System.Globalization.CultureInfo.InvariantCulture);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking spam score");
+            // Return 0 -> 0 is no spam
+            return 0m;
         }
     }
 }
