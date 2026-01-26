@@ -87,10 +87,10 @@ docker-compose build
 docker push henkmeulekamp/pop3-forwarding:latest
 
 # linux/arm64
-docker build -f DockerFile --platform linux/arm64 -t henkmeulekamp/pop3-forwarding:latest-arm64 .
+docker build -f Dockerfile --platform linux/arm64 -t henkmeulekamp/pop3-forwarding:latest-arm64 .
 docker push henkmeulekamp/pop3-forwarding:latest-arm64 
 
 # linux/amd64
-docker build -f DockerFile --platform linux/amd64 -t henkmeulekamp/pop3-forwarding:latest-x86 .
+docker build -f Dockerfile --platform linux/amd64 -t henkmeulekamp/pop3-forwarding:latest-x86 .
 docker push henkmeulekamp/pop3-forwarding:latest-x86 
 ```
