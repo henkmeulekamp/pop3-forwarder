@@ -4,7 +4,6 @@ using MimeKit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 
