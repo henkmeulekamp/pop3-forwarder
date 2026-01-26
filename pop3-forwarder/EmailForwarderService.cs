@@ -79,7 +79,6 @@ public class EmailForwarderService : BackgroundService
                     _logger.LogInformation($"- Message {i + 1}: From: {message.From} Subject: {message.Subject}");
 
                     var spamScore = await CheckSpamScoreAsync(message);
-                     _logger.LogInformation($"Message has spam score ({spamScore})");
                     if (spamScore >= 4.0m)
                     {
                         _logger.LogWarning($"Message has high spam score ({spamScore}), skipping forward and deleting message");
@@ -188,13 +187,13 @@ public class EmailForwarderService : BackgroundService
             }
 
             var score = jsonDoc.RootElement.GetProperty("score").GetString();
-            _logger.LogInformation($"Spam score: {score}");
+            _logger.LogInformation($"-- Spam score: {score}");
             
             return decimal.Parse(score, System.Globalization.CultureInfo.InvariantCulture);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking spam score");
+            _logger.LogError(ex, "-- Error checking spam score");
             // Return 0 -> 0 is no spam
             return 0m;
         }
