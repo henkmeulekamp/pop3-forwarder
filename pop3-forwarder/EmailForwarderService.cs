@@ -2,34 +2,68 @@ using MailKit.Net.Pop3;
 using MailKit.Net.Smtp;
 using MimeKit;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 
-internal class MailWorker
+public class EmailForwarderService : BackgroundService
 {
+    private readonly ILogger<EmailForwarderService> _logger;
+    private readonly IConfiguration _configuration;
+
+    public EmailForwarderService(
+        ILogger<EmailForwarderService> logger,
+        IConfiguration configuration)
+    {
+        _logger = logger;
+        _configuration = configuration;
+    }
+
+    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogInformation("Email Forwarder Service starting...");
         
-    public static async Task ReadPop3EmailsAsync(IConfiguration configuration)
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                _logger.LogDebug("Checking for new emails...");
+                await ForwardEmailsAsync();
+                await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing emails");
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+            }
+        }
+        
+        _logger.LogInformation("Email Forwarder Service stopping...");
+    }
+
+    private async Task ForwardEmailsAsync()
     {
         // Read POP3 settings from configuration
-        string host = configuration["Pop3Settings:Host"]!;
-        int port = int.Parse(configuration["Pop3Settings:Port"]!);
-        bool useSsl = bool.Parse(configuration["Pop3Settings:UseSsl"]!);
-        bool checkCertificateRevocation = bool.Parse(configuration["Pop3Settings:CheckCertificateRevocation"]!);
-        string username = configuration["Pop3Settings:Username"]!;
-        string password = configuration["Pop3Settings:Password"]!;
+        string host = _configuration["Pop3Settings:Host"]!;
+        int port = int.Parse(_configuration["Pop3Settings:Port"]!);
+        bool useSsl = bool.Parse(_configuration["Pop3Settings:UseSsl"]!);
+        bool checkCertificateRevocation = bool.Parse(_configuration["Pop3Settings:CheckCertificateRevocation"]!);
+        string username = _configuration["Pop3Settings:Username"]!;
+        string password = _configuration["Pop3Settings:Password"]!;
 
         using var client = new Pop3Client();
         
             client.CheckCertificateRevocation = checkCertificateRevocation;
             // Connect to the POP3 server
             await client.ConnectAsync(host, port, useSsl);
-            Console.WriteLine($"POP3 Connected to {host}");
+            _logger.LogDebug($"POP3 Connected to {host}");
 
             // Authenticate
             await client.AuthenticateAsync(username, password);
-            Console.WriteLine("POP3 Authenticated successfully");
+            _logger.LogDebug("POP3 Authenticated successfully");
 
             // Get the number of messages
             int messageCount = client.Count;
-            Console.WriteLine($"POP3 Total messages: {messageCount}");
+            _logger.LogInformation($"POP3 Total messages: {messageCount}");
             try
             {
                 // Loop through all messages
@@ -37,27 +71,24 @@ internal class MailWorker
                 {
                     var message = await client.GetMessageAsync(i);
                     
-                    Console.WriteLine($"- Message {i + 1}:");
-                    Console.WriteLine($"  From: {message.From}");
-                    Console.WriteLine($"  Subject: {message.Subject}");
-                    Console.WriteLine();
+                    _logger.LogInformation($"- Message {i + 1}: From: {message.From} Subject: {message.Subject}");
 
                     // Forward the email via SMTP
-                    await SendEmailViaSmtpAsync(message, configuration);
+                    await SendEmailViaSmtpAsync(message, _configuration);
 
                     await client.DeleteMessageAsync(i);
                 }
 
                 // Disconnect
                 await client.DisconnectAsync(true);
-                Console.WriteLine("POP3 Disconnected from server");
+                _logger.LogDebug("POP3 Disconnected from server");
             }
             catch (Exception ex) {
-                Console.WriteLine($"POP 3 - Error: {ex.Message}");
+                _logger.LogError($"POP 3 - Error: {ex.Message}", ex);
             }
     }
  
-    static async Task SendEmailViaSmtpAsync(MimeMessage message, IConfiguration configuration)
+    async Task SendEmailViaSmtpAsync(MimeMessage message, IConfiguration configuration)
     {
         // Read SMTP settings from configuration
         string smtpHost = configuration["SmtpSettings:Host"]!;
@@ -76,33 +107,33 @@ internal class MailWorker
             
             // Connect to the SMTP server
             await smtpClient.ConnectAsync(smtpHost, smtpPort, useSsl);
-            Console.WriteLine($"  Connected to SMTP server {smtpHost}");
+            _logger.LogDebug($"-- Connected to SMTP server {smtpHost}");
 
             // Authenticate
             await smtpClient.AuthenticateAsync(smtpUsername, smtpPassword);
-            Console.WriteLine("  Authenticated with SMTP server");
+            _logger.LogDebug("-- Authenticated with SMTP server");
 
             // Create a new message or forward the existing one
             // Option 1: Forward as-is (preserving original From)
             // await smtpClient.SendAsync(message);
-             Console.WriteLine($"  Email came for {message.To.ToString()}");
+             _logger.LogInformation($"-- Email came for {message.To.ToString()}");
             // Option 2: Create a new forwarded message
             var forwardedMessage = new MimeMessage();
             forwardedMessage.From.Add(new MailboxAddress(MailboxAddress.Parse(message.To.ToString()).Address, smtpUsername));
             forwardedMessage.To.Add(MailboxAddress.Parse(forwardTo));
-            forwardedMessage.Subject = $"{message.Subject}";
+            forwardedMessage.Subject = $"Fwd: {message.Subject}";
             forwardedMessage.Body = message.Body;
 
             // Send the message
             await smtpClient.SendAsync(forwardedMessage);
-            Console.WriteLine($"  Email forwarded to {forwardTo}");
+            _logger.LogInformation($"-- Email forwarded to {forwardTo}");
 
             // Disconnect
             await smtpClient.DisconnectAsync(true);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"  SMTP Error: {ex.Message}");
+            _logger.LogError($"-- SMTP Error: {ex.Message}", ex);
             // bubble up the error to avoid deleting the email from POP3
             throw; 
         }
