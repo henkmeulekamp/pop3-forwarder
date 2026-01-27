@@ -9,7 +9,8 @@ RUN dotnet restore
 RUN dotnet publish -o out
 
 # Build runtime image
-FROM mcr.microsoft.com/dotnet/runtime:10.0
+# FROM mcr.microsoft.com/dotnet/runtime:10.0
+FROM dhi.io/dotnet:10-alpine3.22
 WORKDIR /App
 COPY --from=build /App/out .
 ENTRYPOINT ["dotnet", "pop3-forwarder.dll"]
