@@ -36,6 +36,6 @@ jobs:
     - name: Push Images
       if: ${{github.ref_name == 'main' }}
       run: |
-        docker push ${FINAL_IMAGE}:x86_64 --all-tags
+        docker push ${FINAL_IMAGE}:${GITHUB_SHA} --all-tags
         docker push ${FINAL_IMAGE}:latest
     - run : echo "done" > success-build-${{ github.sha }}
