@@ -39,7 +39,7 @@ This application continuously monitors a POP3 email account and forwards all inc
 1. Connects to a POP3 server every 60 seconds
 2. Retrieves all messages from the inbox
     - Does a SpamCheck against https://spamcheck.postmarkapp.com/doc/
-    - When DeleteSpam=true, deletes email with spamscore above 5, no forwarding.
+    - When DeleteSpam=true, deletes email with spamscore >= 4, no forwarding.
 3. Forwards each message to the configured recipient via SMTP
 4. Deletes successfully forwarded messages from the POP3 server
 5. Repeats the process indefinitely
