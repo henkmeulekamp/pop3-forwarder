@@ -33,7 +33,7 @@ jobs:
     - name: Tag Images
       run: |
         docker tag ${FINAL_IMAGE}:${GITHUB_SHA} ${FINAL_IMAGE}:x86_64
-        ocker tag ${FINAL_IMAGE}:${GITHUB_SHA} ${FINAL_IMAGE}:latest
+        docker tag ${FINAL_IMAGE}:${GITHUB_SHA} ${FINAL_IMAGE}:latest
     - name: Push Images
       if: ${{github.ref_name == 'main' }}
       run: |
