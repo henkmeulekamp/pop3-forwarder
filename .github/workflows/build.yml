@@ -30,18 +30,5 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Build x86_64
       if: ${{github.ref_name == 'main' }}
-      run: docker build -f Dockerfile --platform linux/amd64 -t ${FINAL_IMAGE}:${GITHUB_SHA}  -t ${FINAL_IMAGE}:x86_64 --push . 
-    #- name: Build arm64
-    #  if: ${{github.ref_name == 'main' }}
-    #  run: docker build -f Dockerfile --platform linux/arm64 -t ${FINAL_IMAGE}:${GITHUB_SHA}  -t ${FINAL_IMAGE}:arm64 --push . 
-    # - name: Tag Images
-    #   run: |
-    #     docker tag ${FINAL_IMAGE}:${GITHUB_SHA} ${FINAL_IMAGE}:x86_64
-    #     docker tag ${FINAL_IMAGE}:${GITHUB_SHA} ${FINAL_IMAGE}:latest
-    # - name: Push Images
-    #   if: ${{github.ref_name == 'main' }}
-    #   run: |
-    #     docker push ${FINAL_IMAGE}:${GITHUB_SHA} 
-    #     docker push ${FINAL_IMAGE}:x86_64 
-    #     docker push ${FINAL_IMAGE}:latest
+      run: docker build -f Dockerfile --platform linux/amd64 -t ${FINAL_IMAGE}:${GITHUB_SHA} -t ${FINAL_IMAGE}:x86_64 --push . 
     - run : echo "done" > success-build-${{ github.sha }}

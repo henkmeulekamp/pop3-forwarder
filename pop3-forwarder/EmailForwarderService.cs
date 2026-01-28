@@ -79,14 +79,11 @@ public class EmailForwarderService : BackgroundService
                     _logger.LogInformation($"- Message {i + 1}: From: {message.From} Subject: {message.Subject}");
 
                     var spamScore = await CheckSpamScoreAsync(message);
-                    if (spamScore >= 4.0m)
+                    if (spamScore >= 4.0m && deleteSpam)
                     {
                         _logger.LogWarning($"Message has high spam score ({spamScore}), skipping forward and deleting message");
-                        
-                        if (deleteSpam){
-                            await client.DeleteMessageAsync(i);
-                            continue;
-                        }
+                        await client.DeleteMessageAsync(i);
+                        continue;
                     }
 
                     // Forward the email via SMTP
