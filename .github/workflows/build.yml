@@ -7,12 +7,35 @@ on:
   pull_request:
     branches:
       - main
+env:
+  FINAL_IMAGE: henkmeulekamp/pop3-forwarding
 
 jobs:
   build:
     runs-on: ubuntu-latest      
     steps:
     - uses: actions/checkout@v5
-
-    - name: Build 
-      run: docker build -f Dockerfile --platform linux/amd64 -t henkmeulekamp/pop3-forwarding:latest-x86_64 .
+    - 
+      name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - 
+      name: Login to DGU
+      uses: docker/login-action@v3
+      with:
+          registry: ghcr.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Build  
+      run: docker build -f Dockerfile --platform linux/amd64 -t ${FINAL_IMAGE}:${GITHUB_SHA} .
+    - name: Tag Images
+      run: |
+            docker tag ${FINAL_IMAGE}:${GITHUB_SHA} ${FINAL_IMAGE}:latest
+            docker tag ${FINAL_IMAGE}:${GITHUB_SHA} ${FINAL_IMAGE}:x86_64
+    - name: Push Images
+      if: ${{github.ref_name == 'main' }}
+      run: |
+        docker push ${FINAL_IMAGE}:x86_64 --all-tags
+    - run : echo "done" > success-build-${{ github.sha }}
