@@ -2,11 +2,13 @@ name: Build
 
 on:
   push:
-    branches:
-      - main
     paths-ignore:
       - 'readme.md'
+    branches:
+      - main
   pull_request:
+    paths-ignore:
+      - 'readme.md'
     branches:
       - main
 env:
@@ -30,7 +32,10 @@ jobs:
           registry: dhi.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: PR Build Only
+      if: ${{ github.actor == 'dependabot[bot]' || github.ref_name != 'main' }}
+      run: docker build -f Dockerfile --platform linux/amd64 -t ${FINAL_IMAGE}:${GITHUB_SHA} -t ${FINAL_IMAGE}:x86_64 . 
     - name: Build x86_64
-      if: ${{github.ref_name == 'main' }}
+      if: ${{github.ref_name == 'main' && github.actor != 'dependabot[bot]'}}
       run: docker build -f Dockerfile --platform linux/amd64 -t ${FINAL_IMAGE}:${GITHUB_SHA} -t ${FINAL_IMAGE}:x86_64 --push . 
     - run : echo "done" > success-build-${{ github.sha }}
