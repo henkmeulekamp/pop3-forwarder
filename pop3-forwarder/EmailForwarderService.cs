@@ -130,9 +130,24 @@ public class EmailForwarderService : BackgroundService
             // Option 1: Forward as-is (preserving original From)
             // await smtpClient.SendAsync(message);
              _logger.LogInformation($"-- Email came for {message.To.ToString()}");
+
+            var newFromEmail = forwardTo;
+            var newFromName = "pop3-forwarder";
+            try
+            {
+                // protect against unparseable emails, caused a crash loop
+                MailboxAddress originalFromAddress = MailboxAddress.Parse(message.From.ToString());
+                newFromEmail = originalFromAddress.Address;
+                newFromName = originalFromAddress.Name;
+            }
+            catch 
+            {
+                 _logger.LogWarning($"-- Unparsable email address");
+            }
+
             // Option 2: Create a new forwarded message
             var forwardedMessage = new MimeMessage();
-            forwardedMessage.From.Add(new MailboxAddress(MailboxAddress.Parse(message.To.ToString()).Address, smtpUsername));
+            forwardedMessage.From.Add(new MailboxAddress($"{newFromName}-{newFromEmail}", forwardTo));
             forwardedMessage.To.Add(MailboxAddress.Parse(forwardTo));
             forwardedMessage.Subject = $"Fwd: {message.Subject}";
             forwardedMessage.Body = message.Body;

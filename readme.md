@@ -89,6 +89,8 @@ docker-compose -f ./docker-compose.yml down
 ```
 
 # 5. Dockerhub
+  
+Multi-stage build, runtime using https://hub.docker.com/hardened-images/catalog/dhi/dotnet hardened base image  
 
 ```shell
 docker-compose build
