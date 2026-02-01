@@ -1,0 +1,45 @@
+name: Build-arm64
+
+on: workflow_dispatch
+# on:
+
+#   push:
+#     paths-ignore:
+#       - 'readme.md'
+#     branches:
+#       - main
+#   pull_request:
+#     paths-ignore:
+#       - 'readme.md'
+#     branches:
+#       - main
+env:
+  FINAL_IMAGE: henkmeulekamp/pop3-forwarding
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - uses: actions/checkout@v6
+    - 
+      name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - 
+      name: Login to DGU
+      uses: docker/login-action@v3
+      with:
+          registry: dhi.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: PR Build Only
+      if: ${{ github.actor == 'dependabot[bot]' || github.ref_name != 'main' }}
+      run: docker build -f Dockerfile --platform linux/arm64 -t ${FINAL_IMAGE}:${GITHUB_SHA} -t ${FINAL_IMAGE}:arm64 . 
+    - name: Build arm64
+      if: ${{github.ref_name == 'main' && github.actor != 'dependabot[bot]'}}
+      run: docker build -f Dockerfile --platform linux/arm64 -t ${FINAL_IMAGE}:${GITHUB_SHA} -t ${FINAL_IMAGE}:arm64 --push . 
+    - run : echo "done" > success-build-${{ github.sha }}
+
+
