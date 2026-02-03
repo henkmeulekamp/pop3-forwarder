@@ -41,7 +41,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: ${{github.ref_name == 'main' && github.actor != 'dependabot[bot]'}}
-          tags: ${FINAL_IMAGE}:x86_64
-          cache-from: type=registry,ref=${FINAL_IMAGE}:buildcache
-          cache-to: type=registry,ref=${FINAL_IMAGE}:buildcache,mode=max
+          tags: 
+            - ${{ FINAL_IMAGE }}:x86_64
+            - ${{ FINAL_IMAGE }}:${{ GITHUB_SHA }}
+          cache-from: type=registry,ref=${{ FINAL_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ FINAL_IMAGE }}:buildcache,mode=max
       - run : echo "done" > success-build-${{ github.sha }}
