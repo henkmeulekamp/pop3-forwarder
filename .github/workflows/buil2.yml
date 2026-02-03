@@ -41,9 +41,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: ${{github.ref_name == 'main' && github.actor != 'dependabot[bot]'}}
-          tags: 
-            - henkmeulekamp/pop3-forwarding:x86_64
-            - henkmeulekamp/pop3-forwarding}:${{ github.sha }}
+          tags: |
+            henkmeulekamp/pop3-forwarding:x86_64
+            henkmeulekamp/pop3-forwarding:${{ github.sha }}
           cache-from: type=registry,ref=henkmeulekamp/pop3-forwarding:buildcache
           cache-to: type=registry,ref=henkmeulekamp/pop3-forwarding:buildcache,mode=max
       - run : echo "done" > success-build-${{ github.sha }}
