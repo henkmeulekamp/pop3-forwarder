@@ -76,12 +76,13 @@ public class EmailForwarderService : BackgroundService
                 for (int i = 0; i < messageCount; i++)
                 {
                     var message = await client.GetMessageAsync(i);
-                    _logger.LogInformation($"- Message {i + 1}: From: {message.From} Subject: {message.Subject}");
+                    var emailLog = $"From: {message.From} Subject: {message.Subject}";
+                    _logger.LogInformation($"- Message {i + 1}: {emailLog}");
 
                     var spamScore = await CheckSpamScoreAsync(message);
                     if (spamScore >= 4.0m && deleteSpam)
                     {
-                        _logger.LogWarning($"Message has high spam score ({spamScore}), skipping forward and deleting message");
+                        _logger.LogWarning($"Message has high spam score ({spamScore}), skipping forward and deleting message: {emailLog}");
                         await client.DeleteMessageAsync(i);
                         continue;
                     }
