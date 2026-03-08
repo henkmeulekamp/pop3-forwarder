@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # Build-only for non-main (no registry login, no secrets)
       - name: Build arm64 (no push)
