@@ -160,15 +160,18 @@ public class EmailForwarderService : BackgroundService
             // Disconnect
             await smtpClient.DisconnectAsync(true);
         }
-        catch (SmtpCommandException ex) when (ex.Message.Contains("5.7.0"))
-        {
-            _logger.LogError(ex, $"-- SMTP Error (5.7.0) message blocked for security reasons, deleting from POP3");
-            // Do not rethrow — message is undeliverable, delete it from POP3
-        }
         catch (SmtpCommandException ex)
         {
-            _logger.LogError(ex, $"-- SMTP Error ({ex.StatusCode}) message could not be sent");
-            throw;
+            if (ex.Message.Contains("5.7.0"))
+            {
+                _logger.LogError(ex, $"-- SMTP Error (5.7.0) message blocked for security reasons, deleting from POP3");
+                // Do not rethrow — message is undeliverable, delete it from POP3
+            }
+            else
+            {
+                _logger.LogError(ex, $"-- SMTP Error ({ex.StatusCode}) message could not be sent");
+                throw;
+            }
         }
         catch (Exception ex)
         {
