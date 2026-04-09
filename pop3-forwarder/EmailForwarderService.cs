@@ -164,7 +164,7 @@ public class EmailForwarderService : BackgroundService
         {
             if (ex.Message.Contains("5.7.0"))
             {
-                _logger.LogError(ex, $"-- SMTP Error (5.7.0) message blocked for security reasons, deleting from POP3");
+                _logger.LogWarning(ex, $"-- SMTP Error (5.7.0) message blocked for security reasons, deleting from POP3");
                 // Do not rethrow — message is undeliverable, delete it from POP3
             }
             else
