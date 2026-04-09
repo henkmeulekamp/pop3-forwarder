@@ -160,7 +160,7 @@ public class EmailForwarderService : BackgroundService
             // Disconnect
             await smtpClient.DisconnectAsync(true);
         }
-        catch (SmtpCommandException ex)
+        catch (Exception ex)
         {
             if (ex.Message.Contains("5.7.0"))
             {
@@ -169,15 +169,9 @@ public class EmailForwarderService : BackgroundService
             }
             else
             {
-                _logger.LogError(ex, $"-- SMTP Error ({ex.StatusCode}) message could not be sent");
+                _logger.LogError(ex, $"-- SMTP Error ({ex.Message}) message could not be sent");
                 throw;
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"-- SMTP Error");
-            // bubble up the error to avoid deleting the email from POP3
-            throw;
         }
     }
 
