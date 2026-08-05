@@ -17,6 +17,7 @@ The application can be configured using the following environment variables for 
 - `Pop3Settings__Username` - POP3 account username, required
 - `Pop3Settings__Password` - POP3 account password, required
 - `Pop3Settings__DeleteSpam` - DeleteSpam, defaults to false
+- `Pop3Settings__SpamScoreThreshold` - Spam score at/above which a message is deleted when DeleteSpam=true, defaults to 4.0
 
 ### SMTP Settings
 - `SmtpSettings__Host` - SMTP server hostname, defaults to smtp.gmail.com
@@ -39,7 +40,7 @@ This application continuously monitors a POP3 email account and forwards all inc
 1. Connects to a POP3 server every 60 seconds
 2. Retrieves all messages from the inbox
     - Does a SpamCheck against https://spamcheck.postmarkapp.com/doc/
-    - When DeleteSpam=true, deletes email with spamscore >= 4, no forwarding.
+    - When DeleteSpam=true, deletes email with spamscore >= SpamScoreThreshold (default 4), no forwarding.
 3. Forwards each message to the configured recipient via SMTP
 4. Deletes successfully forwarded messages from the POP3 server
 5. Repeats the process indefinitely
