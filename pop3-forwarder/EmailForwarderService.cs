@@ -52,6 +52,7 @@ public class EmailForwarderService : BackgroundService
         int port = int.Parse(_configuration["Pop3Settings:Port"]!);
         bool useSsl = bool.Parse(_configuration["Pop3Settings:UseSsl"]!);
         bool deleteSpam = bool.Parse(_configuration["Pop3Settings:DeleteSpam"]!);
+        decimal spamScoreThreshold = decimal.Parse(_configuration["Pop3Settings:SpamScoreThreshold"] ?? "4.0", System.Globalization.CultureInfo.InvariantCulture);
         bool checkCertificateRevocation = bool.Parse(_configuration["Pop3Settings:CheckCertificateRevocation"]!);
         string username = _configuration["Pop3Settings:Username"]!;
         string password = _configuration["Pop3Settings:Password"]!;
@@ -80,7 +81,7 @@ public class EmailForwarderService : BackgroundService
                     _logger.LogInformation($"- Message {i + 1}: {emailLog}");
 
                     var spamScore = await CheckSpamScoreAsync(message);
-                    if (spamScore >= 4.0m && deleteSpam)
+                    if (spamScore >= spamScoreThreshold && deleteSpam)
                     {
                         _logger.LogWarning($"Message has high spam score ({spamScore}), skipping forward and deleting message: {emailLog}");
                         await client.DeleteMessageAsync(i);
