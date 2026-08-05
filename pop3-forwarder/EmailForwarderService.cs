@@ -70,7 +70,14 @@ public class EmailForwarderService : BackgroundService
 
             // Get the number of messages
             int messageCount = client.Count;
-            _logger.LogInformation($"POP3 Total messages: {messageCount}");
+            if (messageCount > 0)
+            {
+                _logger.LogInformation($"POP3 Total messages: {messageCount}");
+            }
+            else
+            {
+                _logger.LogDebug($"POP3 Total messages: {messageCount}");
+            }
             try
             {
                 // Loop through all messages
@@ -176,47 +183,61 @@ public class EmailForwarderService : BackgroundService
         }
     }
 
+    private const int SpamCheckMaxAttempts = 3;
+    private static readonly TimeSpan SpamCheckRetryDelay = TimeSpan.FromSeconds(15);
+
     private async Task<decimal> CheckSpamScoreAsync(MimeMessage message)
     {
-        try
+        for (int attempt = 1; attempt <= SpamCheckMaxAttempts; attempt++)
         {
-            var requestBody = new
+            try
             {
-                email = message.ToString(),
-                options = "short"
-            };
+                var requestBody = new
+                {
+                    email = message.ToString(),
+                    options = "short"
+                };
 
-            var content = new StringContent(
-                JsonSerializer.Serialize(requestBody),
-                Encoding.UTF8,
-                "application/json");
+                var content = new StringContent(
+                    JsonSerializer.Serialize(requestBody),
+                    Encoding.UTF8,
+                    "application/json");
 
-            var response = await _httpClient.PostAsync(
-                "https://spamcheck.postmarkapp.com/filter",
-                content);
+                var response = await _httpClient.PostAsync(
+                    "https://spamcheck.postmarkapp.com/filter",
+                    content);
 
-            response.EnsureSuccessStatusCode();
+                response.EnsureSuccessStatusCode();
 
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var jsonDoc = JsonDocument.Parse(responseContent);
-            
-            var success = jsonDoc.RootElement.GetProperty("success").GetBoolean();
-            if (!success)
-            {
-                _logger.LogWarning($"-- Spam check API returned success=false, {responseContent}");
-                return 0m;
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var jsonDoc = JsonDocument.Parse(responseContent);
+
+                var success = jsonDoc.RootElement.GetProperty("success").GetBoolean();
+                if (!success)
+                {
+                    _logger.LogWarning($"-- Spam check API returned success=false, {responseContent}");
+                    return 0m;
+                }
+
+                var score = jsonDoc.RootElement.GetProperty("score").GetString();
+                _logger.LogInformation($"-- Spam score: {score}");
+
+                return decimal.Parse(score, System.Globalization.CultureInfo.InvariantCulture);
             }
+            catch (Exception ex)
+            {
+                if (attempt == SpamCheckMaxAttempts)
+                {
+                    _logger.LogError(ex, $"-- Error checking spam score, giving up after {SpamCheckMaxAttempts} attempts");
+                    // Return 0 -> 0 is no spam
+                    return 0m;
+                }
 
-            var score = jsonDoc.RootElement.GetProperty("score").GetString();
-            _logger.LogInformation($"-- Spam score: {score}");
-            
-            return decimal.Parse(score, System.Globalization.CultureInfo.InvariantCulture);
+                _logger.LogWarning(ex, $"-- Error checking spam score (attempt {attempt}/{SpamCheckMaxAttempts}), retrying in {SpamCheckRetryDelay.TotalSeconds}s");
+                await Task.Delay(SpamCheckRetryDelay);
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "-- Error checking spam score");
-            // Return 0 -> 0 is no spam
-            return 0m;
-        }
+
+        return 0m;
     }
 }
