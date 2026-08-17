@@ -3,23 +3,38 @@ updates:
   - package-ecosystem: "nuget"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     cooldown:
       default-days: 7
+      semver-major-days: 21
+    groups:
+      nuget-updates:
+        patterns:
+          - "*"
     open-pull-requests-limit: 3
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     cooldown:
       default-days: 7
+      semver-major-days: 21
+    groups:
+      github-actions-updates:
+        patterns:
+          - "*"
     open-pull-requests-limit: 3
 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     cooldown:
-      default-days: 14
+      default-days: 7
+      semver-major-days: 21
+    groups:
+      docker-updates:
+        patterns:
+          - "*"
     open-pull-requests-limit: 3
