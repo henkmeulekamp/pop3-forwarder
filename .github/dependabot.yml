@@ -19,7 +19,6 @@ updates:
       interval: "monthly"
     cooldown:
       default-days: 7
-      semver-major-days: 21
     groups:
       github-actions-updates:
         patterns:
@@ -32,7 +31,6 @@ updates:
       interval: "monthly"
     cooldown:
       default-days: 7
-      semver-major-days: 21
     groups:
       docker-updates:
         patterns:
